@@ -179,12 +179,12 @@ def facturas_list_view(request):
 # -------------------------------
 
 def eliminar_factura(request, factura_id):
-    factura = get_object_or_404(Factura, pk=factura_id)
-    if request.method == 'POST':
+    try:
+        factura = Factura.objects.get(pk=factura_id)
         factura.delete()
-        messages.success(request, 'Factura eliminada correctamente.')
-    return redirect('facturas:lista_facturas')
-
+        return JsonResponse({'success': True, 'message': 'Factura eliminada correctamente.'})
+    except Factura.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'La factura no existe.'})
 # -------------------------------
 # Vista Web: enviar correo
 # -------------------------------

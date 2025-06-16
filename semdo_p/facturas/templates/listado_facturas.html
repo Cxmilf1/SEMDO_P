@@ -22,6 +22,9 @@
                style="padding: 10px; border-radius: 5px; border: none; width: 100%; max-width: 400px; background-color: #1E2A38; color: white;">
     </div>
 
+    <!-- ✅ MENSAJE ALERTA -->
+    <div id="mensaje-alerta" style="margin-bottom: 20px; font-weight: bold;"></div>
+
     <!-- Barra de envío masivo -->
     <div id="barra-envio" class="mb-4 d-none" style="margin-bottom: 20px;">
         <button class="btn btn-success" id="btn-enviar" 
@@ -46,7 +49,7 @@
             </thead>
             <tbody>
                 {% for factura in facturas %}
-                <tr style="border-top: 1px solid #2F3E54;">
+                <tr data-id="{{ factura.id }}" style="border-top: 1px solid #2F3E54;">
                     <td style="padding: 10px;"><input type="checkbox" class="check-factura" data-id="{{ factura.id }}"></td>
                     <td style="padding: 10px;">{{ factura.numero_factura }}</td>
                     <td style="padding: 10px;">{{ factura.id_receptor.id_persona.nombre }}</td>
@@ -64,15 +67,11 @@
                         </span>
                     </td>
                     <td style="padding: 10px; text-align: center;">
-                        <form method="post" action="{% url 'facturas:eliminar_factura' factura.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" 
-                                    style="background-color: #dc3545; color: white; padding: 6px 12px;
-                                           border-radius: 4px; border: none; font-size: 14px;"
-                                    onclick="return confirm('¿Eliminar esta factura?')">
-                                🗑️
-                            </button>
-                        </form>
+                        <button onclick="eliminarFactura({{ factura.id }})"
+                                style="background-color: #dc3545; color: white; padding: 6px 12px;
+                                       border-radius: 4px; border: none; font-size: 14px;">
+                            🗑️
+                        </button>
                     </td>
                 </tr>
                 {% empty %}
@@ -116,8 +115,7 @@
         cb.addEventListener("change", actualizarBarraEnvio);
     });
 
-    // Simulación de envío
-    
+    // Envío de facturas
     document.getElementById("btn-enviar")?.addEventListener("click", function () {
         const seleccionadas = Array.from(document.querySelectorAll(".check-factura:checked"))
             .map(cb => cb.dataset.id);
@@ -143,5 +141,31 @@
             alert("Ocurrió un error al enviar las facturas.");
         });
     });
+
+    // ✅ Eliminar factura con AJAX
+    function eliminarFactura(facturaId) {
+        if (!confirm('¿Eliminar esta factura?')) return;
+
+        fetch(`/facturas/eliminar/${facturaId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            const mensaje = document.getElementById("mensaje-alerta");
+            mensaje.textContent = data.message;
+            mensaje.style.color = data.success ? 'limegreen' : 'crimson';
+
+            if (data.success) {
+                const fila = document.querySelector(`tr[data-id="${facturaId}"]`);
+                if (fila) fila.remove();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
 </script>
 {% endblock %}
