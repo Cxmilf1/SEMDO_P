@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - SEMDO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body {
+            background-color: #0B1220;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background-color: #1B2A41;
+            padding: 40px;
+            border-radius: 16px;
+            width: 300px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .login-container h1 {
+            color: white;
+            margin-bottom: 30px;
+            font-size: 20px;
+        }
+
+        .login-container input {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border: 1px solid #5E6E8A;
+            border-radius: 25px;
+            background-color: transparent;
+            color: white;
+            font-size: 14px;
+        }
+
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 25px;
+            background-color: #2C3E66;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .login-container button:hover {
+            background-color: #3D5A99;
+        }
+
+        .login-container a {
+            display: block;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #9AAAC3;
+            text-decoration: none;
+        }
+
+        .login-container a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>SEMDO</h1>
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                 <div style="color: red; font-size: 14px; margin-bottom: 10px;">
+                    {{ form.non_field_errors.0 }}
+                </div>
+             {% endif %}
+
+            <input type="email" name="email" placeholder="Correo Electrónico" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+            <button type="submit">Ingresar</button>
+        </form>
+        <a href="#">¿Olvidaste tu contraseña?</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>📬 Historial de Envío de Facturas</h2>
+    <p class="text-muted">A continuación se listan las facturas enviadas exitosamente.</p>
+
+    <table class="table table-striped table-dark mt-4">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Número de Factura</th>
+                <th>Cliente</th>
+                <th>Email</th>
+                <th>Fecha de Envío</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for envio in envios %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ envio.factura.numero_factura }}</td>
+                <td>{{ envio.factura.id_receptor.id_persona.nombre }}</td>
+                <td>{{ envio.factura.id_receptor.id_persona.email }}</td>
+                <td>{{ envio.fecha_envio|date:"d M Y H:i" }}</td>
+                <td><span class="badge bg-success">Enviado</span></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center text-muted">No hay envíos registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4" style="font-size: 28px;">👥 Lista de Usuarios</h2>
+
+    <form method="get" class="mb-5" style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <input type="text" name="search" placeholder="Buscar por nombre o email..." 
+               value="{{ search }}" class="form-control" 
+               style="padding: 10px; border-radius: 5px; border: none; width: 250px;">
+        <button type="submit" 
+                style="background-color: #3D5A99; color: white; border: none; 
+                       padding: 10px 16px; border-radius: 5px;">🔍 Buscar</button>
+        <a href="{% url 'crear_usuario' %}" 
+           style="background-color: #28a745; color: white; padding: 10px 16px; 
+                  border-radius: 5px; text-decoration: none;">➕ Agregar Usuario</a>
+    </form>
+
+    <div style="overflow-x: auto; margin-top: 30px; margin-left: 30px; margin-right: 30px;">
+        <table style="width: 100%; border-collapse: collapse; background-color: #1E2A38; color: white;">
+            <thead>
+                <tr style="background-color: #27384D;">
+                    <th style="padding: 12px; text-align: left;">Nombre Completo</th> <!-- Columna unificada -->
+                    <th style="padding: 12px; text-align: left;">Correo</th>
+                    <th style="padding: 12px; text-align: left;">Teléfono</th>
+                    <th style="padding: 12px; text-align: left;">Rol</th>
+                    <th style="padding: 12px; text-align: center;">Acciones</th> <!-- Alineación centrada -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                <tr style="border-top: 1px solid #2F3E54;">
+                    <!-- Mostrar el nombre completo en una sola columna -->
+                    <td style="padding: 10px; text-align: left;">{{ usuario.nombre }}</td>
+                    <td style="padding: 10px; text-align: left;">{{ usuario.email }}</td>
+                    <td style="padding: 10px; text-align: left;">{{ usuario.telefono }}</td>
+                    
+                    <td style="padding: 10px; text-align: left;">
+                        {% with usuario.asignaciones_rol.first as rol_asignado %}
+                            {% if rol_asignado %}
+                                {% if rol_asignado.id_rol.nombre == 'administrador' %}
+                                    <span style="display: inline-block; background-color: #3D5A99; color: white; 
+                                                padding: 2px 8px; border-radius: 10px; margin: 2px; font-size: 12px;">
+                                        Administrador
+                                    </span>
+                                {% elif rol_asignado.id_rol.nombre == 'operario' %}
+                                    <span style="display: inline-block; background-color: #28a745; color: white; 
+                                                padding: 2px 8px; border-radius: 10px; margin: 2px; font-size: 12px;">
+                                        Operario
+                                    </span>
+                                {% else %}
+                                    <span style="display: inline-block; background-color: #6c757d; color: white; 
+                                                padding: 2px 8px; border-radius: 10px; margin: 2px; font-size: 12px;">
+                                        {{ rol_asignado.id_rol.nombre }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span style="display: inline-block; background-color: #6c757d; color: white; 
+                                            padding: 2px 8px; border-radius: 10px; margin: 2px; font-size: 12px;">
+                                    Sin rol
+                                </span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                                    <td style="padding: 10px; text-align: center;">
+                                        <div style="display: flex; flex-direction: column; gap: 5px; width: max-content; margin: 0 auto;">
+                                            <a href="{% url 'editar_usuario' id=usuario.id_persona %}" 
+                                               style="background-color: #ffc107; color: black; padding: 5px 8px; 
+                                                      border-radius: 4px; text-decoration: none; font-size: 14px; 
+                                                      text-align: center;">
+                                                      
+                                                      
+                                ✏️ Editar
+                            </a>
+                            <form action="{% url 'eliminar_usuario' id=usuario.id_persona %}" method="post" 
+                                  style="margin: 0;">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        style="background-color: #dc3545; color: white; padding: 5px 8px; 
+                                               border-radius: 4px; border: none; font-size: 14px;"
+                                        onclick="return confirm('¿Está seguro de eliminar este usuario?');">
+                                    🗑️ Eliminar
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="padding: 20px; text-align: center; color: #bbb;">
+                        No se encontraron usuarios.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

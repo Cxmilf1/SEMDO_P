@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inicio - SEMDO</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body {
+            background-color: #0B1220;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+        }
+        nav {
+            background-color: #1B2A41;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        nav a {
+            color: white;
+            margin-left: 20px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        nav a:hover {
+            color: #3D5A99;
+        }
+        .container {
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div><strong>SEMDO</strong></div>
+    <div>
+        <a href="{% url 'home' %}">Inicio</a>
+        <a href="{% url 'listar_usuarios' %}">Usuarios</a>
+        <a href="{% url 'listar_clientes' %}">Clientes</a>
+        <a href="{% url 'facturas:lista_facturas' %}">Facturación</a>
+        <a href="{% url 'correos:historial_envios' %}">Historial</a>
+        <a href="{% url 'logout' %}">Cerrar Sesión</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>Bienvenido a SEMDO</h1>
+    <p>Desde aquí puedes acceder a todas las funcionalidades del sistema.</p>
+</div>
+
+</body>
+</html>

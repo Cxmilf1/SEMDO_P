@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; background-color: #1B2A41; padding: 40px; border-radius: 12px;">
+    <h2 class="mb-4" style="font-size: 24px; font-weight: bold; color: white; border-bottom: 1px solid #3D5A99; padding-bottom: 10px;">
+        {% if form.instance.id_persona %}✏️ Editar Cliente{% else %}➕ Crear Nuevo Cliente{% endif %}
+    </h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Campos específicos para cliente -->
+            <div>
+                <label for="cedula" style="display: block; font-weight: 600; color: #ccc; margin-bottom: 5px;">
+                    Cédula/RUC*
+                </label>
+                <input type="text" name="cedula" id="cedula" 
+                       value="{{ form.cedula.value|default_if_none:'' }}"
+                       class="form-control"
+                       style="width: 100%; padding: 10px; border-radius: 5px; border: none; background-color: #0F1A2F; color: white;"
+                       required>
+                {% if form.cedula.errors %}
+                    <p style="color: #ff4d4f; font-size: 14px; margin-top: 5px;">{{ form.cedula.errors|striptags }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Resto de campos del formulario -->
+            {% for field in form %}
+                {% if field.name != 'cedula' and field.name != 'password' %}
+                <div>
+                    <label for="{{ field.id_for_label }}" style="display: block; font-weight: 600; color: #ccc; margin-bottom: 5px;">
+                        {{ field.label }}
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <p style="color: #ff4d4f; font-size: 14px; margin-top: 5px;">{{ field.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+            <button type="submit" style="background-color: #3D5A99; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                Guardar
+            </button>
+            <a href="{% url 'listar_clientes' %}" style="background-color: #555; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

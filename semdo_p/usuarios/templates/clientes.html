@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4" style="font-size: 28px;">👥 Lista de Clientes</h2>
+
+    <form method="get" class="mb-5" style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <input type="text" name="search" placeholder="Buscar por nombre, email o cédula..." 
+               value="{{ request.GET.search }}" class="form-control" 
+               style="padding: 10px; border-radius: 5px; border: none; width: 250px;">
+        <button type="submit" 
+                style="background-color: #3D5A99; color: white; border: none; 
+                       padding: 10px 16px; border-radius: 5px;">🔍 Buscar</button>
+        <a href="{% url 'crear_cliente' %}" 
+           style="background-color: #28a745; color: white; padding: 10px 16px; 
+                  border-radius: 5px; text-decoration: none;">➕ Agregar Cliente</a>
+    </form>
+
+    <div style="overflow-x: auto; margin-top: 30px; margin-left: 30px; margin-right: 30px;">
+        <table style="width: 100%; border-collapse: collapse; background-color: #1E2A38; color: white;">
+            <thead>
+                <tr style="background-color: #27384D;">
+                    <th style="padding: 12px; text-align: left;">Cédula/RUC</th>
+                    <th style="padding: 12px; text-align: left;">Nombre</th>
+                    <th style="padding: 12px; text-align: left;">Correo</th>
+                    <th style="padding: 12px; text-align: left;">Teléfono</th>
+                    <th style="padding: 12px; text-align: center;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cliente in clientes %}
+                <tr style="border-top: 1px solid #2F3E54;">
+                    <td style="padding: 10px; text-align: left;">{{ cliente.cedula|default:"-" }}</td>
+                    <td style="padding: 10px; text-align: left;">{{ cliente.nombre }}</td>
+                    <td style="padding: 10px; text-align: left;">{{ cliente.email }}</td>
+                    <td style="padding: 10px; text-align: left;">{{ cliente.telefono|default:"-" }}</td>
+                    <td style="padding: 10px; text-align: center;">
+                        <div style="display: flex; gap: 5px; justify-content: center;">
+                            <a href="{% url 'editar_cliente' cliente.id_persona %}" 
+                               style="background-color: #ffc107; color: black; padding: 5px 10px; 
+                                      border-radius: 4px; text-decoration: none;">
+                                ✏️ Editar
+                            </a>
+                            <form action="{% url 'eliminar_cliente' cliente.id_persona %}" method="post" 
+                                  style="display: inline-block;">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        style="background-color: #dc3545; color: white; padding: 5px 10px; 
+                                               border-radius: 4px; border: none;"
+                                        onclick="return confirm('¿Está seguro de eliminar este cliente?');">
+                                    🗑️ Eliminar
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="padding: 20px; text-align: center; color: #bbb;">
+                        No se encontraron clientes.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

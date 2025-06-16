@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; background-color: #1B2A41; padding: 40px; border-radius: 12px;">
+    <h2 class="mb-4" style="font-size: 24px; font-weight: bold; color: white; border-bottom: 1px solid #3D5A99; padding-bottom: 10px;">
+        🗑️ Eliminar Cliente
+    </h2>
+
+    <p style="color: white; font-size: 18px; margin-bottom: 30px;">
+        ¿Está seguro de eliminar al cliente <strong>{{ cliente.nombre }}</strong>?
+    </p>
+    
+    <div style="display: flex; flex-direction: column; gap: 15px; background-color: #27384D; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <div style="display: flex;">
+            <span style="font-weight: bold; color: #ccc; min-width: 120px;">Cédula/RUC:</span>
+            <span style="color: white;">{{ cliente.cedula|default:"-" }}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="font-weight: bold; color: #ccc; min-width: 120px;">Email:</span>
+            <span style="color: white;">{{ cliente.email }}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="font-weight: bold; color: #ccc; min-width: 120px;">Teléfono:</span>
+            <span style="color: white;">{{ cliente.telefono|default:"-" }}</span>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+            <button type="submit" style="background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                Confirmar Eliminación
+            </button>
+            <a href="{% url 'listar_clientes' %}" style="background-color: #555; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

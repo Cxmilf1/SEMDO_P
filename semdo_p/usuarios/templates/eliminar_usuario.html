@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5" style="max-width: 500px;">
+    <h2 class="mb-4">Eliminar Usuario</h2>
+    <p>¿Está seguro que desea eliminar al usuario <strong>{{ usuario.nombre }}</strong>?</p>
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+            <button type="submit" style="background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                Sí, eliminar
+            </button>
+            <a href="{% url 'listar_usuarios' %}" style="background-color: #555; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
