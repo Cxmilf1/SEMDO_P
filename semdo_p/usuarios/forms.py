@@ -1,8 +1,10 @@
 from django import forms
 from .models import Persona, AsignacionRol, Rol
+from django.core.exceptions import ValidationError
+import re
 
 # ----------------------------
-# Formulario de Login (ya existente en el proyecto)
+# Formulario de Login 
 # ----------------------------
 class LoginForm(forms.Form):
     email = forms.EmailField(
@@ -24,7 +26,7 @@ class LoginForm(forms.Form):
 
 
 # ----------------------------
-# Formulario para gestión de usuarios (nuevo)
+# Formulario para gestión de usuarios 
 # ----------------------------
 class UsuarioForm(forms.ModelForm):
     password = forms.CharField(
@@ -50,12 +52,45 @@ class UsuarioForm(forms.ModelForm):
             asignacion = self.instance.asignaciones_rol.first()
             if asignacion:
                 self.fields['rol'].initial = asignacion.id_rol
+
     def clean_password(self):
         password = self.cleaned_data.get('password')
-        # Para usuarios nuevos, la contraseña es obligatoria
-        if not self.instance.pk and not password:
-            raise forms.ValidationError("La contraseña es obligatoria para nuevos usuarios.")
+
+        if not password:
+            raise ValidationError("Este campo es obligatorio.")
+
+        # Validaciones de seguridad
+        if len(password) < 8:
+            raise ValidationError("La contraseña debe tener al menos 8 caracteres.")
+        if not re.search(r"[A-Z]", password):
+            raise ValidationError("Debe contener al menos una letra mayúscula.")
+        if not re.search(r"[a-z]", password):
+            raise ValidationError("Debe contener al menos una letra minúscula.")
+        if not re.search(r"[0-9!@#$%^&*()_+=\[\]{};:,.<>?|`~\-]", password):
+            raise ValidationError("Debe contener al menos un número o carácter especial.")
         return password
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if not nombre:
+            raise ValidationError("Este campo es obligatorio.")
+        if any(char.isdigit() for char in nombre):
+            raise ValidationError("El nombre no debe contener números.")
+        return nombre.upper()
+
+    def clean_direccion(self):
+        direccion = self.cleaned_data.get('direccion')
+        if direccion:
+            direccion = direccion.upper()
+            # No prohibimos números, solo limpiamos símbolos no deseados si quieres
+        return direccion
+
+
+    def clean_telefono(self):
+        telefono = self.cleaned_data.get('telefono')
+        if telefono and not telefono.isdigit():
+            raise ValidationError("El número de teléfono debe contener solo dígitos.")
+        return telefono
 
     def save(self, commit=True):
         persona = super().save(commit=False)
@@ -73,7 +108,7 @@ class UsuarioForm(forms.ModelForm):
 
 
 # ----------------------------
-# Formulario para gestión de clientes (nuevo)
+# Formulario para gestión de clientes 
 # ----------------------------
 class ClienteForm(forms.ModelForm):
     cedula = forms.CharField(
@@ -93,22 +128,57 @@ class ClienteForm(forms.ModelForm):
             'telefono': 'Teléfono',
             'direccion': 'Dirección'
         }
-        
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Eliminar validación de contraseña para clientes
         self.fields.pop('password', None)
-        
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if Persona.objects.exclude(pk=self.instance.pk).filter(email=email).exists():
+            raise ValidationError("Este correo ya está registrado.")
+        return email
+
+    def clean_cedula(self):
+        cedula = self.cleaned_data.get('cedula')
+        if not cedula or not cedula.isdigit():
+            raise ValidationError("La cédula debe contener solo números.")
+        if Persona.objects.exclude(pk=self.instance.pk).filter(cedula=cedula).exists():
+            raise ValidationError("Esta cédula ya está registrada.")
+        return cedula
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if not nombre:
+            raise ValidationError("Este campo es obligatorio.")
+        if any(char.isdigit() for char in nombre):
+            raise ValidationError("El nombre no debe contener números.")
+        return nombre.upper()
+
+    def clean_direccion(self):
+        direccion = self.cleaned_data.get('direccion')
+        if not direccion:
+            raise ValidationError("La dirección es obligatoria.")
+        return direccion.upper()
+
+
+    def clean_telefono(self):
+        telefono = self.cleaned_data.get('telefono')
+        if not telefono:
+            raise ValidationError("El teléfono es obligatorio.")
+        if not telefono.isdigit():
+            raise ValidationError("El número de teléfono debe contener solo dígitos.")
+        return telefono
+
+
     def save(self, commit=True):
-        # Guardar persona sin contraseña
         persona = super().save(commit=False)
-        persona.password = 'cliente_sin_acceso'  
-        
+        persona.password = 'cliente_sin_acceso'
+
         if commit:
             persona.save()
-            
-            # Asignar rol de cliente automáticamente
-            rol_cliente, created = Rol.objects.get_or_create(
+
+            rol_cliente, _ = Rol.objects.get_or_create(
                 nombre='Cliente',
                 defaults={
                     'puede_emitir': False,
@@ -116,6 +186,6 @@ class ClienteForm(forms.ModelForm):
                 }
             )
             AsignacionRol.objects.filter(id_persona=persona).delete()
-            AsignacionRol.objects.create(id_persona=persona, id_rol=rol)
-            
+            AsignacionRol.objects.create(id_persona=persona, id_rol=rol_cliente)
+
         return persona

@@ -10,7 +10,8 @@ urlpatterns = [
     # Autenticación
     path('login/', views.login_view, name='login'),              
     path('logout/', views.logout_view, name='logout'),
-    path('home/', views.home_view, name='home'),                  
+    path('home/', views.home_view, name='home'),   
+    path('clientes/eliminar_seleccionados/', views.eliminar_clientes_seleccionados, name='eliminar_clientes_seleccionados'),               
 
     # Gestión de usuarios (vistas web)
     path('panel/usuarios/', views.listar_personas, name='listar_usuarios'),

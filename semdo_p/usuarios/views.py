@@ -79,7 +79,7 @@ def listar_personas(request):
 
 @login_required
 def crear_persona(request):
-    if not request.user.is_staff:  
+    if not request.user.is_staff:
         messages.error(request, 'No tienes permisos para realizar esta acción')
         return redirect('listar_usuarios')
 
@@ -91,6 +91,11 @@ def crear_persona(request):
             if password:
                 persona.set_password(password)
             persona.save()
+
+            rol_seleccionado = form.cleaned_data.get('rol')
+            if rol_seleccionado:
+                AsignacionRol.objects.create(id_persona=persona, id_rol=rol_seleccionado)
+
             messages.success(request, 'Persona creada exitosamente')
             return redirect('listar_usuarios')
     else:
@@ -110,6 +115,9 @@ def editar_persona(request, id):
 
     persona = get_object_or_404(Persona, id_persona=id)
 
+    # ✅ OBTENER EL ROL ACTUAL DE LA PERSONA
+    rol_actual = persona.asignaciones_rol.first().id_rol if persona.asignaciones_rol.exists() else None
+
     if request.method == 'POST':
         form = UsuarioForm(request.POST, instance=persona)
         if form.is_valid():
@@ -118,10 +126,16 @@ def editar_persona(request, id):
             if password:
                 persona.set_password(password)
             persona.save()
+            rol_nuevo = form.cleaned_data.get('rol')
+            AsignacionRol.objects.update_or_create(
+                id_persona=persona,
+                defaults={'id_rol': rol_nuevo}
+            )
+
             messages.success(request, 'Persona actualizada exitosamente')
             return redirect('listar_usuarios')
     else:
-        form = UsuarioForm(instance=persona)
+        form = UsuarioForm(instance=persona, initial={'rol': rol_actual})
 
     return render(request, 'crear_editar_usuario.html', {
         'form': form,
@@ -255,6 +269,28 @@ def eliminar_cliente(request, id):
     return render(request, 'cliente_confirmar_eliminar.html', {
         'cliente': cliente
     })
+
+@login_required
+def eliminar_clientes_seleccionados(request):
+    if request.method == 'POST':
+        ids = request.POST.getlist('clientes_seleccionados')
+        clientes_eliminados = 0
+
+        for id_str in ids:
+            try:
+                cliente = Persona.objects.get(id_persona=id_str)
+                if cliente.asignaciones_rol.filter(id_rol__nombre='Cliente').exists():
+                    cliente.asignaciones_rol.filter(id_rol__nombre='Cliente').delete()
+                    cliente.delete()
+                    clientes_eliminados += 1
+            except Persona.DoesNotExist:
+                continue
+
+        messages.success(request, f'{clientes_eliminados} cliente(s) eliminados exitosamente.')
+        return redirect('listar_clientes')
+
+    messages.error(request, 'Método no permitido.')
+    return redirect('listar_clientes')
 
 # Vistas API (REST)
 

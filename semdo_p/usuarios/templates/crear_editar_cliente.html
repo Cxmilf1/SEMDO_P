@@ -1,49 +1,96 @@
 {% extends 'base.html' %}
 {% block content %}
-<div style="max-width: 600px; margin: 0 auto; background-color: #1B2A41; padding: 40px; border-radius: 12px;">
-    <h2 class="mb-4" style="font-size: 24px; font-weight: bold; color: white; border-bottom: 1px solid #3D5A99; padding-bottom: 10px;">
+<div style="max-width: 700px; margin: 0 auto; background-color: #1B2A41; padding: 40px; border-radius: 12px;">
+    <h2 style="font-size: 24px; font-weight: bold; color: white; border-bottom: 1px solid #3D5A99; padding-bottom: 10px;">
         {% if form.instance.id_persona %}✏️ Editar Cliente{% else %}➕ Crear Nuevo Cliente{% endif %}
     </h2>
 
-    <form method="post">
+    {% if form.non_field_errors %}
+    <div style="background-color: #ff4d4f33; padding: 10px; border-radius: 5px; margin-bottom: 15px; color: #a80000;">
+        {{ form.non_field_errors|striptags }}
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate>
         {% csrf_token %}
         <div style="display: flex; flex-direction: column; gap: 20px;">
-            <!-- Campos específicos para cliente -->
+
+            <!-- Campo Cédula/RUC -->
             <div>
-                <label for="cedula" style="display: block; font-weight: 600; color: #ccc; margin-bottom: 5px;">
-                    Cédula/RUC*
-                </label>
-                <input type="text" name="cedula" id="cedula" 
+                <label for="id_cedula" style="font-weight: 600; color: #ccc;">{{ form.cedula.label }}*</label>
+                <input type="text" name="cedula" id="id_cedula"
                        value="{{ form.cedula.value|default_if_none:'' }}"
                        class="form-control"
-                       style="width: 100%; padding: 10px; border-radius: 5px; border: none; background-color: #0F1A2F; color: white;"
-                       required>
+                       style="width: 100%; padding: 12px; border-radius: 5px; border: none; background-color: #0F1A2F; color: white;"
+                       required
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 {% if form.cedula.errors %}
-                    <p style="color: #ff4d4f; font-size: 14px; margin-top: 5px;">{{ form.cedula.errors|striptags }}</p>
+                <p style="color: #ff4d4f; font-size: 14px;">{{ form.cedula.errors|striptags }}</p>
                 {% endif %}
             </div>
-            
-            <!-- Resto de campos del formulario -->
-            {% for field in form %}
-                {% if field.name != 'cedula' and field.name != 'password' %}
-                <div>
-                    <label for="{{ field.id_for_label }}" style="display: block; font-weight: 600; color: #ccc; margin-bottom: 5px;">
-                        {{ field.label }}
-                    </label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <p style="color: #ff4d4f; font-size: 14px; margin-top: 5px;">{{ field.errors|striptags }}</p>
-                    {% endif %}
-                </div>
+
+            <!-- Campo Nombre (solo letras y espacios) -->
+            <div>
+                <label for="id_nombre" style="font-weight: 600; color: #ccc;">{{ form.nombre.label }}*</label>
+                <input type="text" name="nombre" id="id_nombre"
+                       value="{{ form.nombre.value|default_if_none:'' }}"
+                       class="form-control"
+                       style="width: 100%; padding: 12px; height: auto; min-height: 48px; border-radius: 5px; border: none; background-color: #0F1A2F; color: white;"
+                       required
+                       oninput="this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '').toUpperCase()">
+                {% if form.nombre.errors %}
+                <p style="color: #ff4d4f; font-size: 14px;">{{ form.nombre.errors|striptags }}</p>
                 {% endif %}
-            {% endfor %}
+            </div>
+
+            <!-- Campo Teléfono (solo dígitos) -->
+            <div>
+                <label for="id_telefono" style="font-weight: 600; color: #ccc;">{{ form.telefono.label }}*</label>
+                <input type="text" name="telefono" id="id_telefono"
+                       value="{{ form.telefono.value|default_if_none:'' }}"
+                       class="form-control"
+                       style="width: 100%; padding: 12px; border-radius: 5px; border: none; background-color: #0F1A2F; color: white;"
+                       required
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                {% if form.telefono.errors %}
+                <p style="color: #ff4d4f; font-size: 14px;">{{ form.telefono.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Campo Email -->
+            <div>
+                <label for="id_email" style="font-weight: 600; color: #ccc;">{{ form.email.label }}*</label>
+                <input type="email" name="email" id="id_email"
+                       value="{{ form.email.value|default_if_none:'' }}"
+                       class="form-control"
+                       style="width: 100%; padding: 12px; border-radius: 5px; border: none; background-color: #0F1A2F; color: white;"
+                       required>
+                {% if form.email.errors %}
+                <p style="color: #ff4d4f; font-size: 14px;">{{ form.email.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Campo Dirección (solo letras, números y símbolos básicos) -->
+            <div>
+                <label for="id_direccion" style="font-weight: 600; color: #ccc;">{{ form.direccion.label }}</label>
+                <input type="text" name="direccion" id="id_direccion"
+                       value="{{ form.direccion.value|default_if_none:'' }}"
+                       class="form-control"
+                       style="width: 100%; padding: 12px; height: auto; min-height: 48px; border-radius: 5px; border: none; background-color: #0F1A2F; color: white;"
+                       oninput="this.value = this.value.replace(/[^A-Za-z0-9ÁÉÍÓÚáéíóúÑñ.,#\s]/g, '').toUpperCase()"
+
+                {% if form.direccion.errors %}
+                <p style="color: #ff4d4f; font-size: 14px;">{{ form.direccion.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
         </div>
 
         <div style="margin-top: 30px; display: flex; justify-content: space-between;">
-            <button type="submit" style="background-color: #3D5A99; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+            <button type="submit" style="background-color: #3D5A99; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
                 Guardar
             </button>
-            <a href="{% url 'listar_clientes' %}" style="background-color: #555; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+            <a href="{% url 'listar_clientes' %}" style="background-color: #555; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
                 Cancelar
             </a>
         </div>

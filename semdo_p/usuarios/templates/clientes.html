@@ -16,53 +16,82 @@
                   border-radius: 5px; text-decoration: none;">➕ Agregar Cliente</a>
     </form>
 
-    <div style="overflow-x: auto; margin-top: 30px; margin-left: 30px; margin-right: 30px;">
-        <table style="width: 100%; border-collapse: collapse; background-color: #1E2A38; color: white;">
-            <thead>
-                <tr style="background-color: #27384D;">
-                    <th style="padding: 12px; text-align: left;">Cédula/RUC</th>
-                    <th style="padding: 12px; text-align: left;">Nombre</th>
-                    <th style="padding: 12px; text-align: left;">Correo</th>
-                    <th style="padding: 12px; text-align: left;">Teléfono</th>
-                    <th style="padding: 12px; text-align: center;">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for cliente in clientes %}
-                <tr style="border-top: 1px solid #2F3E54;">
-                    <td style="padding: 10px; text-align: left;">{{ cliente.cedula|default:"-" }}</td>
-                    <td style="padding: 10px; text-align: left;">{{ cliente.nombre }}</td>
-                    <td style="padding: 10px; text-align: left;">{{ cliente.email }}</td>
-                    <td style="padding: 10px; text-align: left;">{{ cliente.telefono|default:"-" }}</td>
-                    <td style="padding: 10px; text-align: center;">
-                        <div style="display: flex; gap: 5px; justify-content: center;">
-                            <a href="{% url 'editar_cliente' cliente.id_persona %}" 
-                               style="background-color: #ffc107; color: black; padding: 5px 10px; 
-                                      border-radius: 4px; text-decoration: none;">
-                                ✏️ Editar
-                            </a>
-                            <form action="{% url 'eliminar_cliente' cliente.id_persona %}" method="post" 
-                                  style="display: inline-block;">
-                                {% csrf_token %}
-                                <button type="submit" 
-                                        style="background-color: #dc3545; color: white; padding: 5px 10px; 
-                                               border-radius: 4px; border: none;"
-                                        onclick="return confirm('¿Está seguro de eliminar este cliente?');">
-                                    🗑️ Eliminar
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" style="padding: 20px; text-align: center; color: #bbb;">
-                        No se encontraron clientes.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <form method="post" action="{% url 'eliminar_clientes_seleccionados' %}">
+        {% csrf_token %}
+        <div style="overflow-x: auto; margin-top: 30px; margin-left: 30px; margin-right: 30px;">
+            <table style="width: 100%; border-collapse: collapse; background-color: #1E2A38; color: white;">
+                <thead>
+                    <tr style="background-color: #27384D;">
+                        <th style="padding: 12px;">
+                            <input type="checkbox" id="select-all">
+                        </th>
+                        <th style="padding: 12px; text-align: left;">Cédula/RUC</th>
+                        <th style="padding: 12px; text-align: left;">Nombre</th>
+                        <th style="padding: 12px; text-align: left;">Correo</th>
+                        <th style="padding: 12px; text-align: left;">Teléfono</th>
+                        <th style="padding: 12px; text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr style="border-top: 1px solid #2F3E54;">
+                        <td style="padding: 10px; text-align: center;">
+                            <input type="checkbox" name="clientes_seleccionados" value="{{ cliente.id_persona }}">
+                        </td>
+                        <td style="padding: 10px; text-align: left;">{{ cliente.cedula|default:"-" }}</td>
+                        <td style="padding: 10px; text-align: left;">{{ cliente.nombre }}</td>
+                        <td style="padding: 10px; text-align: left;">{{ cliente.email }}</td>
+                        <td style="padding: 10px; text-align: left;">{{ cliente.telefono|default:"-" }}</td>
+                        <td style="padding: 10px; text-align: center;">
+                            <div style="display: flex; gap: 5px; justify-content: center;">
+                                <a href="{% url 'editar_cliente' cliente.id_persona %}" 
+                                   style="background-color: #ffc107; color: black; padding: 5px 10px; 
+                                          border-radius: 4px; text-decoration: none;">
+                                    ✏️ Editar
+                                </a>
+                                <form action="{% url 'eliminar_cliente' cliente.id_persona %}" method="post" 
+                                      style="display: inline-block;">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            style="background-color: #dc3545; color: white; padding: 5px 10px; 
+                                                   border-radius: 4px; border: none;"
+                                            onclick="return confirm('¿Está seguro de eliminar este cliente?');">
+                                        🗑️ Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="padding: 20px; text-align: center; color: #bbb;">
+                            No se encontraron clientes.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <button type="submit"
+                    style="background-color: #dc3545; color: white; padding: 10px 20px; 
+                           border-radius: 5px; border: none;"
+                    onclick="return confirm('¿Estás seguro de eliminar los clientes seleccionados?');">
+                🗑️ Eliminar seleccionados
+            </button>
+        </div>
+    </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('input[name="clientes_seleccionados"]');
+
+    selectAll.addEventListener('change', function () {
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    });
+});
+</script>
 {% endblock %}

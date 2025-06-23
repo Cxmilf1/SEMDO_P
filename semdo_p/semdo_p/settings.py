@@ -12,8 +12,9 @@ AUTH_USER_MODEL = 'usuarios.Persona'
 ALLOWED_HOSTS = []
 
 # Configuración de media
+DOCUMENTOS_DIR = os.path.join(os.path.expanduser('~'), 'Documents', 'SEMDO_FACTURAS')
+MEDIA_ROOT = DOCUMENTOS_DIR  # Django guardará los archivos aquí
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
