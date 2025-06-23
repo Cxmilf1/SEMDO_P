@@ -159,7 +159,6 @@ def eliminar_persona(request, id):
 def listar_clientes(request):
     search = request.GET.get('search', '')
     
-    # Corregir nombre del rol (usar 'Cliente' con mayúscula)
     rol_cliente = Rol.objects.filter(nombre='Cliente').first()
     
     # Obtener clientes (aunque no exista rol)
@@ -172,10 +171,10 @@ def listar_clientes(request):
         clientes = clientes.filter(
             Q(nombre__icontains=search) | 
             Q(email__icontains=search) |
-            Q(cedula__icontains=search)  # Agregar búsqueda por cédula
+            Q(cedula__icontains=search)  
         )
     
-    return render(request, 'clientes.html', {  # Cambiar a tu template real
+    return render(request, 'clientes.html', {  
         'clientes': clientes,
         'search': search
     })

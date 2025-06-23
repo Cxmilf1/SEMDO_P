@@ -31,7 +31,7 @@ class Persona(AbstractBaseUser):
     email = models.EmailField(unique=True, null=False, db_column='email')
     direccion = models.TextField(null=True, blank=True, db_column='direccion')
     telefono = models.CharField(max_length=15, null=True, blank=True, db_column='telefono')
-    password = models.TextField(db_column='password')  # ya incluido por AbstractBaseUser, pero aquí se respeta columna
+    password = models.TextField(db_column='password')  
     fecha_creacion = models.DateTimeField(auto_now_add=True, db_column='fecha_creacion')
     fecha_modificacion = models.DateTimeField(auto_now=True, db_column='fecha_modificacion')
     creado_por = models.ForeignKey(
@@ -50,7 +50,7 @@ class Persona(AbstractBaseUser):
         db_column='modificado_por',
         related_name='personas_modificadas'
     )
-    cedula = models.CharField(max_length=20, unique=True, blank=True, null=True)  # Nuevo campo
+    cedula = models.CharField(max_length=20, unique=True, blank=True, null=True)  
 
     def __str__(self):
         return self.nombre

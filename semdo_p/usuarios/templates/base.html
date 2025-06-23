@@ -4,46 +4,92 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}SEMDO{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             background-color: #0B1220;
             color: white;
             font-family: 'Inter', sans-serif;
             margin: 0;
         }
+
         nav {
             background-color: #1B2A41;
             padding: 15px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
         }
-        nav a {
-            color: white;
-            margin-left: 20px;
-            text-decoration: none;
+
+        nav .logo {
+            font-size: 22px;
             font-weight: 600;
         }
-        nav a:hover {
-            color: #3D5A99;
+
+        nav .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
         }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #3D5A99;
+            color: white;
+        }
+
         .container {
             padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media screen and (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            nav .nav-links {
+                width: 100%;
+                flex-direction: column;
+                margin-top: 15px;
+            }
+
+            nav a {
+                padding: 10px;
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
 
 <nav>
-    <div><strong>SEMDO</strong></div>
-    <div>
-        <a href="{% url 'home' %}">Inicio</a>
-        <a href="{% url 'listar_usuarios' %}">Usuarios</a>
-        <a href="{% url 'listar_clientes' %}">Clientes</a>
-        <a href="{% url 'facturas:lista_facturas' %}">Facturación</a>
-        <a href="{% url 'correos:historial_envios' %}">Historial</a>
-        <a href="{% url 'logout' %}">Cerrar Sesión</a>
+    <div class="logo">SEMDO</div>
+    <div class="nav-links">
+        <a href="{% url 'home' %}"><i class="fas fa-home"></i> Inicio</a>
+        <a href="{% url 'listar_usuarios' %}"><i class="fas fa-users"></i> Usuarios</a>
+        <a href="{% url 'listar_clientes' %}"><i class="fas fa-user-friends"></i> Clientes</a>
+        <a href="{% url 'facturas:lista_facturas' %}"><i class="fas fa-file-invoice"></i> Facturación</a>
+        <a href="{% url 'correos:historial_envios' %}"><i class="fas fa-history"></i> Historial</a>
+        <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
     </div>
 </nav>
 

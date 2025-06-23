@@ -46,7 +46,6 @@ class UsuarioForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Inicializar campo rol con la asignación actual, si existe
         if self.instance.pk:
             asignacion = self.instance.asignaciones_rol.first()
             if asignacion:
@@ -103,7 +102,7 @@ class ClienteForm(forms.ModelForm):
     def save(self, commit=True):
         # Guardar persona sin contraseña
         persona = super().save(commit=False)
-        persona.password = 'cliente_sin_acceso'  # Valor dummy no utilizable
+        persona.password = 'cliente_sin_acceso'  
         
         if commit:
             persona.save()
@@ -116,9 +115,7 @@ class ClienteForm(forms.ModelForm):
                     'puede_recibir': True
                 }
             )
-            AsignacionRol.objects.get_or_create(
-                id_persona=persona,
-                id_rol=rol_cliente
-            )
+            AsignacionRol.objects.filter(id_persona=persona).delete()
+            AsignacionRol.objects.create(id_persona=persona, id_rol=rol)
             
         return persona

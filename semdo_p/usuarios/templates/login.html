@@ -4,9 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Login - SEMDO</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             background-color: #0B1220;
             font-family: 'Inter', sans-serif;
@@ -15,60 +20,93 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .login-container {
             background-color: #1B2A41;
-            padding: 40px;
-            border-radius: 16px;
-            width: 300px;
+            padding: 50px 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 360px;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
         }
 
         .login-container h1 {
             color: white;
+            font-size: 26px;
+            font-weight: 600;
             margin-bottom: 30px;
-            font-size: 20px;
         }
 
-        .login-container input {
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group i {
+            position: absolute;
+            top: 50%;
+            left: 15px;
+            transform: translateY(-50%);
+            color: #9AAAC3;
+        }
+
+        .input-group input {
             width: 100%;
-            padding: 12px 15px;
-            margin: 10px 0;
+            padding: 14px 16px 14px 40px;
             border: 1px solid #5E6E8A;
-            border-radius: 25px;
+            border-radius: 30px;
             background-color: transparent;
             color: white;
-            font-size: 14px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #3D5A99;
         }
 
         .login-container button {
             width: 100%;
-            padding: 12px;
-            margin-top: 20px;
+            padding: 14px;
+            margin-top: 10px;
             border: none;
-            border-radius: 25px;
+            border-radius: 30px;
             background-color: #2C3E66;
             color: white;
             font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
 
         .login-container button:hover {
             background-color: #3D5A99;
         }
 
-        .login-container a {
-            display: block;
-            margin-top: 15px;
-            font-size: 12px;
-            color: #9AAAC3;
-            text-decoration: none;
+        .error-message {
+            color: #FF6B6B;
+            font-size: 14px;
+            margin-bottom: 15px;
         }
 
-        .login-container a:hover {
-            text-decoration: underline;
+        @media screen and (max-width: 400px) {
+            .login-container {
+                padding: 40px 25px;
+                max-width: 90%;
+            }
+
+            .login-container h1 {
+                font-size: 22px;
+            }
         }
     </style>
 </head>
@@ -79,16 +117,23 @@
             {% csrf_token %}
 
             {% if form.non_field_errors %}
-                 <div style="color: red; font-size: 14px; margin-bottom: 10px;">
+                <div class="error-message">
                     {{ form.non_field_errors.0 }}
                 </div>
-             {% endif %}
+            {% endif %}
 
-            <input type="email" name="email" placeholder="Correo Electrónico" required>
-            <input type="password" name="password" placeholder="Contraseña" required>
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" name="email" placeholder="Correo Electrónico" required>
+            </div>
+
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" name="password" placeholder="Contraseña" required>
+            </div>
+
             <button type="submit">Ingresar</button>
         </form>
-        <a href="#">¿Olvidaste tu contraseña?</a>
     </div>
 </body>
 </html>

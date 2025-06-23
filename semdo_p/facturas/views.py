@@ -185,6 +185,7 @@ def eliminar_factura(request, factura_id):
         return JsonResponse({'success': True, 'message': 'Factura eliminada correctamente.'})
     except Factura.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'La factura no existe.'})
+
 # -------------------------------
 # Vista Web: enviar correo
 # -------------------------------
@@ -224,10 +225,6 @@ Nombre del cliente: {nombre_cliente}
 Valor a pagar: ${total_pagar:,.2f}
 Rango de pago oportuno: {periodo}
 
-Adjunto a este mensaje encontrará el archivo PDF con el detalle completo de su factura. Le recomendamos revisarlo cuidadosamente y realizar el pago dentro del plazo establecido para evitar recargos.
-
-Si tiene alguna duda o requiere asistencia adicional, no dude en contactarnos a través de nuestros canales de atención al cliente.
-
 Agradecemos su confianza.
 
 Atentamente,
@@ -247,6 +244,10 @@ Servicio de Acueducto y Alcantarillado
                 ruta_absoluta = os.path.join(settings.MEDIA_ROOT, factura.archivo_pdf.name)
                 email.attach_file(ruta_absoluta)
                 email.send(fail_silently=False)
+
+                factura.estado = 'enviada'
+                factura.save()
+                
                 enviadas += 1
 
         return JsonResponse({'mensaje': f'✅ {enviadas} factura(s) enviada(s) correctamente.'})
