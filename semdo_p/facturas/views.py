@@ -155,7 +155,7 @@ def facturas_list_view(request):
                         'direccion': datos.get('direccion', ''),
                         'email': f"{nombre_cliente.replace(' ', '.').lower()}@ejemplo.com",
                         'password': 'cliente_sin_acceso',
-                        'is_staff': False  
+                        'is_staff': False, 
                         'is_superuser': False  
                     }
                 )
