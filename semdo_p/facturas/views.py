@@ -15,6 +15,8 @@ from .forms import CargarFacturasForm
 from django.http import JsonResponse
 from django.core.mail import send_mail, EmailMessage
 from correos.models import EnvioFactura
+from django.utils import timezone
+from correos.models import ConfiguracionCorreo 
 
 # -------------------------------
 # Utilidades para dividir y extraer datos del PDF
@@ -228,14 +230,21 @@ def enviar_facturas_view(request):
     if request.method == 'POST':
         ids = request.POST.getlist('ids[]')
         enviadas = 0
+        errores = []
 
         config = ConfiguracionCorreo.objects.first()
-        mensaje_personalizado = config.mensaje_personalizado if config else ""
+        mensaje_personalizado = config.mensaje_personalizado if config else "Adjuntamos su factura correspondiente."
 
         for factura_id in ids:
-            factura = Factura.objects.filter(id=factura_id).first()
-            if factura and factura.id_receptor.id_persona.email:
+            try:
+                factura = Factura.objects.get(id=factura_id)
                 cliente = factura.id_receptor.id_persona
+                email_destino = cliente.email
+
+                if not email_destino:
+                    errores.append(f"Cliente {cliente.nombre} sin correo.")
+                    continue
+
                 nombre_cliente = cliente.nombre
                 total_pagar = factura.monto
                 periodo = factura.periodo
@@ -254,10 +263,15 @@ Rango de pago oportuno: {periodo}
                     subject=f"Factura de Acueducto y Alcantarillado {factura.numero_factura}",
                     body=cuerpo,
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[cliente.email]
+                    to=[email_destino]
                 )
 
                 ruta_absoluta = os.path.join(settings.MEDIA_ROOT, factura.archivo_pdf.name)
+
+                if not os.path.isfile(ruta_absoluta):
+                    errores.append(f"Archivo no encontrado para la factura {factura.numero_factura}")
+                    continue
+
                 email.attach_file(ruta_absoluta)
                 email.send(fail_silently=False)
 
@@ -272,4 +286,14 @@ Rango de pago oportuno: {periodo}
 
                 enviadas += 1
 
-        return JsonResponse({'mensaje': f'✅ {enviadas} factura(s) enviada(s) correctamente.'})
+            except Exception as e:
+                errores.append(f"Factura ID {factura_id}: {str(e)}")
+
+        if errores:
+            return JsonResponse({
+                'mensaje': f"⚠️ Se enviaron {enviadas} factura(s), pero ocurrieron errores:\n" + "\n".join(errores)
+            }, status=500)
+
+        return JsonResponse({
+            'mensaje': f'✅ {enviadas} factura(s) enviada(s) correctamente.'
+        })
