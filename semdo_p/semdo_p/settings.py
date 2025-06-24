@@ -2,12 +2,12 @@ from pathlib import Path
 import os
 import dj_database_url
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-REEMPLAZA_ESTO_POR_UNA_CLAVE_SEGURA'
 
-DEBUG = True
+# En producción, DEBUG debe ser False
+DEBUG = False
 
 AUTH_USER_MODEL = 'usuarios.Persona'
 
@@ -32,13 +32,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'usuarios',
-    'facturas',	
+    'facturas',    
     'correos',
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # 🔥 Agregado para servir estáticos en producción
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -58,7 +59,6 @@ TEMPLATES = [
             BASE_DIR / 'facturas' / 'templates', 
             BASE_DIR / 'correos' / 'templates',
         ],
-          
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -74,7 +74,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'semdo_p.wsgi.application'
 
 DATABASES =  {
-    
     'default': dj_database_url.parse(
         'postgresql://semdomain:VdJAOMS1yiGLAgEYeYVFQYR2RAm9rhIo@dpg-d1cvp3juibrs73dm5ing-a.virginia-postgres.render.com/semdo_db',
         conn_max_age=600
@@ -93,7 +92,11 @@ TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
 
+# Configuración de archivos estáticos
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  
+# WhiteNoise storage para producción
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -117,7 +120,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'semdo2026@gmail.com'
 EMAIL_HOST_PASSWORD = 'vsqedomtslrcumgo'  
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
 
 LOGIN_URL = '/login/'
 LOGOUT_REDIRECT_URL = '/login/'
