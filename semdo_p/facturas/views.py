@@ -16,6 +16,7 @@ from django.http import JsonResponse
 from django.core.mail import send_mail, EmailMessage
 from correos.models import EnvioFactura
 from django.utils import timezone
+from configuracion.models import ConfiguracionCorreo
 
 # -------------------------------
 # Utilidades para dividir y extraer datos del PDF
