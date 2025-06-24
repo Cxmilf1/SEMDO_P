@@ -48,3 +48,20 @@ class EnvioFactura(models.Model):
     )
 
     metodo = models.CharField(max_length=50, default='email')
+
+class ConfiguracionCorreo(models.Model):
+    mensaje_personalizado = models.TextField(
+        default="""Reciba un cordial saludo de parte de SEMDO S.A. E.S.P.
+
+Le informamos que su factura correspondiente al servicio de acueducto se encuentra disponible. A continuación, encontrará un resumen de los datos principales:
+
+Agradecemos su confianza.
+
+Atentamente,
+SEMDO S.A. E.S.P.
+Servicio de Acueducto y Alcantarillado""",
+        help_text="Texto adicional del mensaje (sin incluir nombre, monto ni periodo, que se insertan automáticamente)."
+    )
+
+    def __str__(self):
+        return "Configuración de correo"

@@ -1,6 +1,7 @@
 import os
 import re
 import jwt
+from django.db.models import Exists, OuterRef
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
@@ -13,6 +14,7 @@ from PyPDF2 import PdfReader, PdfWriter
 from .forms import CargarFacturasForm
 from django.http import JsonResponse
 from django.core.mail import send_mail, EmailMessage
+from correos.models import EnvioFactura
 
 # -------------------------------
 # Utilidades para dividir y extraer datos del PDF
@@ -107,7 +109,6 @@ def parsear_fecha(fecha_str):
 
 def facturas_list_view(request):
     form = CargarFacturasForm()
-    mensaje = ''
     
     if request.method == 'POST':
         form = CargarFacturasForm(request.POST, request.FILES)
@@ -125,18 +126,31 @@ def facturas_list_view(request):
                 return redirect('facturas:lista_facturas')
 
             fs.delete(nombre_archivo)
-
             rol_emisor = Rol.objects.filter(puede_emitir=True).first()
             rol_receptor = Rol.objects.filter(puede_recibir=True).first()
             emisor = Persona.objects.filter(is_staff=True).first()
             asignacion_emisor, _ = AsignacionRol.objects.get_or_create(id_persona=emisor, id_rol=rol_emisor)
 
             facturas_creadas = []
+            facturas_duplicadas = []  # Almacena números de facturas duplicadas
+            facturas_erroneas = []     # Almacena facturas con errores
+            
             for f in facturas_divididas:
                 datos = f.get('datos', {})
                 nombre_cliente = datos.get('nombre_cliente')
+                
                 if not nombre_cliente:
                     continue
+                    
+                # Verificar si la factura ya existe
+                numero_factura = datos.get('numero_factura')
+                if not numero_factura or Factura.objects.filter(numero_factura=numero_factura).exists():
+                    if numero_factura:
+                        facturas_duplicadas.append(numero_factura)
+                    else:
+                        facturas_erroneas.append(f"Páginas {f['paginas']}")
+                    continue  # Saltar esta factura
+
                 cliente, _ = Persona.objects.get_or_create(
                     nombre=nombre_cliente,
                     defaults={
@@ -149,29 +163,41 @@ def facturas_list_view(request):
 
                 ruta_relativa = os.path.relpath(f['ruta'], settings.MEDIA_ROOT)
 
-                factura = Factura.objects.create(
-                    numero_factura=datos.get('numero_factura', f"FACT-{datetime.now().timestamp()}"),
-                    id_emisor=asignacion_emisor,
-                    id_receptor=asignacion_receptor,
-                    fecha_emision=datos.get('fecha_emision', datetime.now().date()),
-                    fecha_vencimiento=datos.get('fecha_vencimiento', datetime.now().date() + timedelta(days=30)),
-                    monto=datos.get('total_pagar', 0.0),
-                    estado='pendiente',
-                    archivo_pdf=ruta_relativa,
-                    periodo=datos.get('periodo', datetime.now().strftime('%Y-%m')),
-                    direccion=datos.get('direccion', '')
-                )
-                facturas_creadas.append(factura)
+                try:
+                    factura = Factura.objects.create(
+                        numero_factura=numero_factura,
+                        id_emisor=asignacion_emisor,
+                        id_receptor=asignacion_receptor,
+                        fecha_emision=datos.get('fecha_emision', datetime.now().date()),
+                        fecha_vencimiento=datos.get('fecha_vencimiento', datetime.now().date() + timedelta(days=30)),
+                        monto=datos.get('total_pagar', 0.0),
+                        estado='pendiente',
+                        archivo_pdf=ruta_relativa,
+                        periodo=datos.get('periodo', datetime.now().strftime('%Y-%m')),
+                        direccion=datos.get('direccion', '')
+                    )
+                    facturas_creadas.append(factura)
+                except Exception as e:
+                    facturas_erroneas.append(f"{numero_factura} - {str(e)}")
 
-            mensaje = f"✅ {len(facturas_creadas)} factura(s) procesada(s) correctamente."
-            messages.success(request, mensaje)
+            # Construir mensaje de resultado
+            mensaje = ""
+            if facturas_creadas:
+                mensaje += f"✅ {len(facturas_creadas)} factura(s) procesada(s) correctamente. "
+            if facturas_duplicadas:
+                mensaje += f"❌ Facturas duplicadas (no procesadas): {', '.join(facturas_duplicadas)}. "
+            if facturas_erroneas:
+                mensaje += f"⚠️ Errores en: {', '.join(facturas_erroneas)}"
+
+            messages.info(request, mensaje.strip())
             return redirect('facturas:lista_facturas')
 
-    facturas = Factura.objects.all().order_by('-fecha_creacion')
+    envios = EnvioFactura.objects.filter(factura=OuterRef('pk'))
+    facturas = Factura.objects.annotate(ya_enviada=Exists(envios)).filter(ya_enviada=False).order_by('-fecha_creacion')
+
     return render(request, 'listado_facturas.html', {
         'facturas': facturas,
-        'form': form,
-        'mensaje': mensaje
+        'form': form
     })
 
 # -------------------------------
@@ -194,7 +220,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import EmailMessage
 from django.http import JsonResponse
 from django.conf import settings
-from .models import Factura
+from .models import Factura, ConfiguracionCorreo, EnvioFactura  # ✅ Importar EnvioFactura
+from django.utils import timezone
 import os
 
 @csrf_exempt
@@ -203,51 +230,49 @@ def enviar_facturas_view(request):
         ids = request.POST.getlist('ids[]')
         enviadas = 0
 
+        config = ConfiguracionCorreo.objects.first()
+        mensaje_personalizado = config.mensaje_personalizado if config else ""
+
         for factura_id in ids:
             factura = Factura.objects.filter(id=factura_id).first()
             if factura and factura.id_receptor.id_persona.email:
 
-                # 🔄 CAMBIO: Extraer datos personalizados
                 cliente = factura.id_receptor.id_persona
                 nombre_cliente = cliente.nombre
                 total_pagar = factura.monto
                 periodo = factura.periodo
 
-                # 🔄 CAMBIO: Crear cuerpo personalizado
                 cuerpo = f"""
 Estimado/a {nombre_cliente}:
 
-Reciba un cordial saludo de parte de SEMDO S.A. E.S.P.
-
-Le informamos que su factura correspondiente al servicio de acueducto se encuentra disponible. A continuación, encontrará un resumen de los datos principales:
+{mensaje_personalizado}
 
 Nombre del cliente: {nombre_cliente}
 Valor a pagar: ${total_pagar:,.2f}
 Rango de pago oportuno: {periodo}
-
-Agradecemos su confianza.
-
-Atentamente,
-SEMDO S.A. E.S.P.
-Servicio de Acueducto y Alcantarillado
                 """
 
-                # 🔄 CAMBIO: Usar configuración de email desde settings
                 email = EmailMessage(
                     subject=f"Factura de Acueducto y Alcantarillado {factura.numero_factura}",
                     body=cuerpo,
-                    from_email=settings.DEFAULT_FROM_EMAIL,  # 🔄 CAMBIO
+                    from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[cliente.email]
                 )
 
-                # Adjuntar archivo PDF
                 ruta_absoluta = os.path.join(settings.MEDIA_ROOT, factura.archivo_pdf.name)
                 email.attach_file(ruta_absoluta)
                 email.send(fail_silently=False)
 
                 factura.estado = 'enviada'
                 factura.save()
-                
+
+                # ✅ CAMBIO: Se incluye destinatario=cliente (id_persona)
+                EnvioFactura.objects.create(
+                    factura=factura,
+                    destinatario=cliente,  # 👈 este campo es requerido
+                    fecha_envio=timezone.now()
+                )
+
                 enviadas += 1
 
         return JsonResponse({'mensaje': f'✅ {enviadas} factura(s) enviada(s) correctamente.'})

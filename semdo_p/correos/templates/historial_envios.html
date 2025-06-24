@@ -1,46 +1,75 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4" style="font-size: 28px;"> Historial de Envío de Facturas</h2>
-    <p class="text-muted">A continuación se listan las facturas enviadas exitosamente.</p>
+<div class="container mt-5" style="max-width: 1200px;">
+    <h2 class="mb-3" style="font-size: 28px;">Historial de Envío de Facturas</h2>
+    <p class="text-muted mb-4">Busca por número de factura o cliente. También puedes eliminar múltiples envíos.</p>
 
-    <div style="overflow-x: auto; margin-top: 30px; margin-left: 30px; margin-right: 30px;">
-        <table style="width: 100%; border-collapse: collapse; background-color: #1E2A38; color: white;">
-            <thead>
-                <tr style="background-color: #27384D;">
-                    <th style="padding: 12px; text-align: left;">#</th>
-                    <th style="padding: 12px; text-align: left;">Número de Factura</th>
-                    <th style="padding: 12px; text-align: left;">Cliente</th>
-                    <th style="padding: 12px; text-align: left;">Email</th>
-                    <th style="padding: 12px; text-align: left;">Fecha de Envío</th>
-                    <th style="padding: 12px; text-align: left;">Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for envio in envios %}
-                <tr style="border-top: 1px solid #2F3E54;">
-                    <td style="padding: 10px;">{{ forloop.counter }}</td>
-                    <td style="padding: 10px;">{{ envio.factura.numero_factura }}</td>
-                    <td style="padding: 10px;">{{ envio.factura.id_receptor.id_persona.nombre }}</td>
-                    <td style="padding: 10px;">{{ envio.factura.id_receptor.id_persona.email }}</td>
-                    <td style="padding: 10px;">{{ envio.fecha_envio|date:"d M Y H:i" }}</td>
-                    <td style="padding: 10px;">
-                        <span style="display: inline-block; background-color: #28a745; color: white; 
-                                     padding: 4px 10px; border-radius: 10px; font-size: 13px;">
-                            Enviado
-                        </span>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" style="padding: 20px; text-align: center; color: #bbb;">
-                        No hay envíos registrados.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Barra de búsqueda y botón eliminar -->
+        <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 20px;">
+            <input type="text" name="q" value="{{ query }}" placeholder="🔎 Buscar por número o cliente"
+                   style="flex: 1; min-width: 250px; padding: 10px 15px; border-radius: 8px;
+                          border: none; background-color: #1E2A38; color: white;
+                          box-shadow: 0 0 5px rgba(0,0,0,0.2);">
+
+            <button type="submit" class="btn btn-danger"
+                    style="padding: 10px 20px; border-radius: 8px; border: none; font-weight: 500;">
+                🗑️ Eliminar seleccionados
+            </button>
+        </div>
+
+        <!-- Tabla -->
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; background-color: #1E2A38; color: white;">
+                <thead>
+                    <tr style="background-color: #27384D;">
+                        <th style="padding: 12px;"><input type="checkbox" id="checkAll"></th>
+                        <th style="padding: 12px;">#</th>
+                        <th style="padding: 12px; text-align: left;">Número de Factura</th>
+                        <th style="padding: 12px; text-align: left;">Cliente</th>
+                        <th style="padding: 12px; text-align: left;">Email</th>
+                        <th style="padding: 12px; text-align: left;">Fecha de Envío</th>
+                        <th style="padding: 12px; text-align: center;">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for envio in envios %}
+                    <tr style="border-top: 1px solid #2F3E54;">
+                        <td style="padding: 10px;"><input type="checkbox" name="seleccionados" value="{{ envio.id }}"></td>
+                        <td style="padding: 10px;">{{ forloop.counter }}</td>
+                        <td style="padding: 10px;">{{ envio.factura.numero_factura }}</td>
+                        <td style="padding: 10px;">{{ envio.factura.id_receptor.id_persona.nombre }}</td>
+                        <td style="padding: 10px;">{{ envio.factura.id_receptor.id_persona.email }}</td>
+                        <td style="padding: 10px;">{{ envio.fecha_envio|date:"d M Y H:i" }}</td>
+                        <td style="padding: 10px; text-align: center;">
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 10px;
+                                         font-size: 13px; font-weight: 500;
+                                         background-color: #28a745; color: white;">
+                                Enviado
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="padding: 20px; text-align: center; color: #bbb;">
+                            No hay envíos registrados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
 </div>
+
+<!-- Script para seleccionar todos -->
+<script>
+document.getElementById('checkAll')?.addEventListener('change', function () {
+    const checkboxes = document.querySelectorAll('input[name="seleccionados"]');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+});
+</script>
 {% endblock %}

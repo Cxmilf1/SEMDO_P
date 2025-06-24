@@ -50,6 +50,7 @@ TEMPLATES = [
             BASE_DIR / 'templates',
             BASE_DIR / 'usuarios' / 'templates',
             BASE_DIR / 'facturas' / 'templates', 
+            BASE_DIR / 'correos' / 'templates',
         ],
           
         'APP_DIRS': True,

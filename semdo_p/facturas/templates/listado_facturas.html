@@ -2,34 +2,45 @@
 
 {% block content %}
 <div class="container mt-5" style="max-width: 1200px;">
-    <h2 style="font-size: 28px; margin-bottom: 10px;"> Gestión de Facturas</h2>
+    <h2 style="font-size: 28px; margin-bottom: 10px;">Gestión de Facturas</h2>
     <p style="color: #bbb;">Cargue un archivo PDF consolidado, se dividirá automáticamente y se asignará por nombre a cada cliente.</p>
 
-    <!-- Formulario de carga PDF -->
-    <form id="upload-form" method="post" enctype="multipart/form-data" class="mt-4" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 30px;">
+    <!-- Bloque superior: Carga + Botón + Buscador -->
+    <form id="upload-form" method="post" enctype="multipart/form-data" class="mt-4" 
+          style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 30px;">
         {% csrf_token %}
-        <input type="file" name="archivo_pdf" accept=".pdf" required
-               style="padding: 10px; border-radius: 5px; border: none; background-color: #1E2A38; color: white;">
+        
+        <!-- Selector de archivo -->
+        <label for="archivo_pdf" style="background-color: #1E2A38; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.2);">
+            📎 Seleccionar archivo PDF
+            <input id="archivo_pdf" type="file" name="archivo_pdf" accept=".pdf" required style="display: none;">
+        </label>
+
+        <span id="nombre-archivo" style="color: #ccc; font-style: italic;">Ningún archivo seleccionado</span>
+
+        <!-- Botón de cargar -->
         <button type="submit" 
-                style="background-color: #3D5A99; color: white; padding: 10px 16px; border-radius: 5px; border: none;">
-            📤 Cargar PDF y Procesar
+                style="background-color: #3D5A99; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;">
+            📤 Cargar y Procesar
         </button>
+
+        <!-- Buscador -->
+        <input type="text" id="buscador" placeholder="🔎 Buscar por número, cliente, estado..."
+               style="flex: 1; min-width: 250px; padding: 10px 15px; border-radius: 8px; border: none;
+                      background-color: #1E2A38; color: white; box-shadow: 0 0 5px rgba(0,0,0,0.2);">
     </form>
 
-    <!-- Buscador -->
-    <div style="margin-bottom: 20px;">
-        <input type="text" id="buscador" placeholder="🔎 Buscar por número, cliente, estado..."
-               style="padding: 10px; border-radius: 5px; border: none; width: 100%; max-width: 400px; background-color: #1E2A38; color: white;">
-    </div>
-
-    <!-- ✅ MENSAJE ALERTA -->
+    <!-- Mensaje alerta -->
     <div id="mensaje-alerta" style="margin-bottom: 20px; font-weight: bold;"></div>
 
     <!-- Barra de envío masivo -->
     <div id="barra-envio" class="mb-4 d-none" style="margin-bottom: 20px;">
+        <textarea id="cuerpo-correo" placeholder=" Escriba el cuerpo del correo aquí (se incluirá en el mensaje)..."
+                  style="width: 100%; padding: 12px; border-radius: 8px; background-color: #1E2A38; color: white; border: none; box-shadow: 0 0 5px rgba(0,0,0,0.2); margin-bottom: 10px;"></textarea>
+
         <button class="btn btn-success" id="btn-enviar" 
-                style="background-color: #28a745; color: white; padding: 10px 16px; border-radius: 5px; border: none;">
-            📧 Enviar Facturas Seleccionadas
+                style="background-color: #28a745; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;">
+             Enviar Facturas Seleccionadas
         </button>
     </div>
 
@@ -69,7 +80,7 @@
                     <td style="padding: 10px; text-align: center;">
                         <button onclick="eliminarFactura({{ factura.id }})"
                                 style="background-color: #dc3545; color: white; padding: 6px 12px;
-                                       border-radius: 4px; border: none; font-size: 14px;">
+                                       border-radius: 6px; border: none; font-size: 14px; cursor: pointer;">
                             🗑️
                         </button>
                     </td>
@@ -87,85 +98,94 @@
 </div>
 
 <script>
-    // Buscador
-    document.getElementById("buscador").addEventListener("keyup", function () {
-        const term = this.value.toLowerCase();
-        document.querySelectorAll("table tbody tr").forEach(row => {
-            const text = row.innerText.toLowerCase();
-            row.style.display = text.includes(term) ? "" : "none";
-        });
+// Mostrar nombre del archivo seleccionado
+document.getElementById("archivo_pdf").addEventListener("change", function () {
+    const nombre = this.files[0]?.name || "Ningún archivo seleccionado";
+    document.getElementById("nombre-archivo").textContent = nombre;
+});
+
+// Buscador
+document.getElementById("buscador").addEventListener("keyup", function () {
+    const term = this.value.toLowerCase();
+    document.querySelectorAll("table tbody tr").forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(term) ? "" : "none";
     });
+});
 
-    // Selección múltiple
-    const checkTodos = document.getElementById("check-todos");
-    const checkFacturas = document.querySelectorAll(".check-factura");
-    const barraEnvio = document.getElementById("barra-envio");
+// Selección múltiple
+const checkTodos = document.getElementById("check-todos");
+const checkFacturas = document.querySelectorAll(".check-factura");
+const barraEnvio = document.getElementById("barra-envio");
 
-    function actualizarBarraEnvio() {
-        const seleccionadas = document.querySelectorAll(".check-factura:checked");
-        barraEnvio.classList.toggle("d-none", seleccionadas.length === 0);
-    }
+function actualizarBarraEnvio() {
+    const seleccionadas = document.querySelectorAll(".check-factura:checked");
+    barraEnvio.classList.toggle("d-none", seleccionadas.length === 0);
+}
 
-    checkTodos?.addEventListener("change", function () {
-        document.querySelectorAll(".check-factura").forEach(cb => cb.checked = this.checked);
-        actualizarBarraEnvio();
+checkTodos?.addEventListener("change", function () {
+    document.querySelectorAll(".check-factura").forEach(cb => cb.checked = this.checked);
+    actualizarBarraEnvio();
+});
+
+checkFacturas.forEach(cb => {
+    cb.addEventListener("change", actualizarBarraEnvio);
+});
+
+// Envío de facturas con cuerpo personalizado
+document.getElementById("btn-enviar")?.addEventListener("click", function () {
+    const seleccionadas = Array.from(document.querySelectorAll(".check-factura:checked"))
+        .map(cb => cb.dataset.id);
+
+    if (seleccionadas.length === 0) return;
+
+    const formData = new FormData();
+    seleccionadas.forEach(id => formData.append('ids[]', id));
+
+    const cuerpoCorreo = document.getElementById("cuerpo-correo").value.trim();
+    formData.append("cuerpo", cuerpoCorreo);
+
+    fetch("{% url 'facturas:enviar_facturas' %}", {
+        method: "POST",
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.mensaje);
+    })
+    .catch(err => {
+        console.error("❌ Error al enviar facturas:", err);
+        alert("Ocurrió un error al enviar las facturas.");
     });
+});
 
-    checkFacturas.forEach(cb => {
-        cb.addEventListener("change", actualizarBarraEnvio);
+// Eliminar factura con AJAX
+function eliminarFactura(facturaId) {
+    if (!confirm('¿Eliminar esta factura?')) return;
+
+    fetch(`/facturas/eliminar/${facturaId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const mensaje = document.getElementById("mensaje-alerta");
+        mensaje.textContent = data.message;
+        mensaje.style.color = data.success ? 'limegreen' : 'crimson';
+
+        if (data.success) {
+            const fila = document.querySelector(`tr[data-id="${facturaId}"]`);
+            if (fila) fila.remove();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
     });
-
-    // Envío de facturas
-    document.getElementById("btn-enviar")?.addEventListener("click", function () {
-        const seleccionadas = Array.from(document.querySelectorAll(".check-factura:checked"))
-            .map(cb => cb.dataset.id);
-
-        if (seleccionadas.length === 0) return;
-
-        const formData = new FormData();
-        seleccionadas.forEach(id => formData.append('ids[]', id));
-
-        fetch("{% url 'facturas:enviar_facturas' %}", {
-            method: "POST",
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.mensaje);
-        })
-        .catch(err => {
-            console.error("❌ Error al enviar facturas:", err);
-            alert("Ocurrió un error al enviar las facturas.");
-        });
-    });
-
-    // ✅ Eliminar factura con AJAX
-    function eliminarFactura(facturaId) {
-        if (!confirm('¿Eliminar esta factura?')) return;
-
-        fetch(`/facturas/eliminar/${facturaId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            const mensaje = document.getElementById("mensaje-alerta");
-            mensaje.textContent = data.message;
-            mensaje.style.color = data.success ? 'limegreen' : 'crimson';
-
-            if (data.success) {
-                const fila = document.querySelector(`tr[data-id="${facturaId}"]`);
-                if (fila) fila.remove();
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    }
+}
 </script>
 {% endblock %}
