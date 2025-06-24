@@ -11,7 +11,11 @@ DEBUG = True
 
 AUTH_USER_MODEL = 'usuarios.Persona'
 
-ALLOWED_HOSTS = ['semdo-app.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'semdo-app.onrender.com',
+    'localhost', 
+    '127.0.0.1',
+]
 
 # Configuración de media
 DOCUMENTOS_DIR = os.path.join(os.path.expanduser('~'), 'Documents', 'SEMDO_FACTURAS')
