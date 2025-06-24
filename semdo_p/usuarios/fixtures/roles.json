@@ -5,7 +5,7 @@
       "fields": {
         "nombre": "Administrador",
         "puede_emitir": true,
-        "puede_recibir": true
+        "puede_recibir": false
       }
     },
     {
