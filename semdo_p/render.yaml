@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: semdo-app
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn semdo_p.wsgi:application
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://semdomain:VdJAOMS1yiGLAgEYeYVFQYR2RAm9rhIo@dpg-d1cvp3juibrs73dm5ing-a.virginia-postgres.render.com/semdo_db
+      - key: SECRET_KEY
+        value: cambia_esto_por_una_clave_segura
+      - key: DEBUG
+        value: "False"
+      - key: EMAIL_HOST_USER
+        value: semdo2026@gmail.com
+      - key: EMAIL_HOST_PASSWORD
+        value: vsqedomtslrcumgo
