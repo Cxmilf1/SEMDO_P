@@ -38,8 +38,12 @@ def dividir_pdf(ruta_pdf):
             writer = PdfWriter()
             writer.add_page(reader.pages[i])
             writer.add_page(reader.pages[i + 1])
-            with open(ruta_destino, 'wb') as f:
-                writer.write(f)
+            try:
+                with open(ruta_destino, 'wb') as f:
+                    writer.write(f)
+                print(f"✅ Factura guardada en: {ruta_destino}")
+            except Exception as e:
+                print(f"❌ ERROR al guardar PDF: {e}")
 
             facturas.append({
                 'ruta': ruta_destino,
