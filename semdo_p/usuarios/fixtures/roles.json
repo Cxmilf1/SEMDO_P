@@ -1,0 +1,30 @@
+[
+    {
+      "model": "usuarios.rol",
+      "pk": 1,
+      "fields": {
+        "nombre": "Administrador",
+        "puede_emitir": true,
+        "puede_recibir": true
+      }
+    },
+    {
+      "model": "usuarios.rol",
+      "pk": 2,
+      "fields": {
+        "nombre": "Operario",
+        "puede_emitir": true,
+        "puede_recibir": false
+      }
+    },
+    {
+      "model": "usuarios.rol",
+      "pk": 3,
+      "fields": {
+        "nombre": "Cliente",
+        "puede_emitir": false,
+        "puede_recibir": true
+      }
+    }
+  ]
+  
