@@ -227,16 +227,27 @@ def crear_cliente(request):
 @login_required
 def editar_cliente(request, id):
     cliente = get_object_or_404(Persona, id_persona=id)
-    
+
     # Verificar si el cliente tiene rol de cliente
-    if not cliente.asignaciones_rol.filter(id_rol__nombre='Cliente').exists():
+    asignacion_cliente = cliente.asignaciones_rol.filter(id_rol__nombre='Cliente').first()
+    if not asignacion_cliente:
         messages.warning(request, 'Esta persona no es un cliente registrado')
         return redirect('listar_clientes')
 
     if request.method == 'POST':
         form = ClienteForm(request.POST, instance=cliente)
         if form.is_valid():
-            form.save()
+            cliente_actualizado = form.save(commit=False)
+            cliente_actualizado.save()
+
+            # Asegurarse de que conserve la asignación al rol Cliente
+            rol_cliente = Rol.objects.get(nombre='Cliente')
+            AsignacionRol.objects.update_or_create(
+                id_persona=cliente_actualizado,
+                id_rol=rol_cliente,
+                defaults={}
+            )
+
             messages.success(request, 'Cliente actualizado exitosamente')
             return redirect('listar_clientes')
     else:
@@ -246,6 +257,7 @@ def editar_cliente(request, id):
         'form': form,
         'titulo': '✏️ Editar Cliente'
     })
+
 
 @login_required
 def eliminar_cliente(request, id):
