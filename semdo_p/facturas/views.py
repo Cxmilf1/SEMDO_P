@@ -69,17 +69,16 @@ def extraer_datos_factura(texto):
     }
 
     for campo, patron in patrones.items():
-       match = re.search(patron, texto, re.IGNORECASE)
-       if match:
-           valor = match.group(1).strip()
-           if campo == 'total_pagar':
-               valor = float(valor.replace('$', '').replace(',', '').replace('.', '', valor.count('.') - 1))
-           elif campo in ['fecha_emision', 'fecha_vencimiento']:
-               valor = parsear_fecha(valor)
-           datos[campo] = valor
+        match = re.search(patron, texto, re.IGNORECASE)
+        if match:
+            valor = match.group(1).strip()
+            if campo == 'total_pagar':
+                valor = float(valor.replace('$', '').replace(',', '').replace('.', '', valor.count('.') - 1))
+            elif campo in ['fecha_emision', 'fecha_vencimiento']:
+                valor = parsear_fecha(valor)
+            datos[campo] = valor
 
     return datos
-
 
 def parsear_fecha(fecha_str):
     meses = {
@@ -132,8 +131,8 @@ def facturas_list_view(request):
             asignacion_emisor, _ = AsignacionRol.objects.get_or_create(id_persona=emisor, id_rol=rol_emisor)
 
             facturas_creadas = []
-            facturas_duplicadas = []  # Almacena números de facturas duplicadas
-            facturas_erroneas = []     # Almacena facturas con errores
+            facturas_duplicadas = []
+            facturas_erroneas = []
             
             for f in facturas_divididas:
                 datos = f.get('datos', {})
@@ -141,26 +140,34 @@ def facturas_list_view(request):
                 
                 if not nombre_cliente:
                     continue
-                    
-                # Verificar si la factura ya existe
+
                 numero_factura = datos.get('numero_factura')
                 if not numero_factura or Factura.objects.filter(numero_factura=numero_factura).exists():
                     if numero_factura:
                         facturas_duplicadas.append(numero_factura)
                     else:
                         facturas_erroneas.append(f"Páginas {f['paginas']}")
-                    continue  # Saltar esta factura
+                    continue
 
-                cliente, _ = Persona.objects.get_or_create(
+                cliente, creado = Persona.objects.get_or_create(
                     nombre=nombre_cliente,
                     defaults={
                         'direccion': datos.get('direccion', ''),
                         'email': f"{nombre_cliente.replace(' ', '.').lower()}@ejemplo.com",
-                        'password': 'temporal123'
+                        'password': 'cliente_sin_acceso',
+                        'is_staff': False  # 👈 Esto evita que sea admin
                     }
                 )
-                asignacion_receptor, _ = AsignacionRol.objects.get_or_create(id_persona=cliente, id_rol=rol_receptor)
 
+                if creado:
+                    AsignacionRol.objects.filter(id_persona=cliente).delete()  # 🔥 Eliminamos roles previos
+
+                rol_cliente, _ = Rol.objects.get_or_create(nombre='Cliente', defaults={
+                    'puede_emitir': False,
+                    'puede_recibir': True
+                })
+
+                asignacion_receptor, _ = AsignacionRol.objects.get_or_create(id_persona=cliente, id_rol=rol_cliente)
                 ruta_relativa = os.path.relpath(f['ruta'], settings.MEDIA_ROOT)
 
                 try:
@@ -180,14 +187,13 @@ def facturas_list_view(request):
                 except Exception as e:
                     facturas_erroneas.append(f"{numero_factura} - {str(e)}")
 
-            # Construir mensaje de resultado
             mensaje = ""
             if facturas_creadas:
                 mensaje += f"✅ {len(facturas_creadas)} factura(s) procesada(s) correctamente. "
             if facturas_duplicadas:
-                mensaje += f"❌ Facturas duplicadas (no procesadas): {', '.join(facturas_duplicadas)}. "
+                mensaje += f"❌ Facturas duplicadas: {', '.join(facturas_duplicadas)}. "
             if facturas_erroneas:
-                mensaje += f"⚠️ Errores en: {', '.join(facturas_erroneas)}"
+                mensaje += f"⚠️ Errores: {', '.join(facturas_erroneas)}"
 
             messages.info(request, mensaje.strip())
             return redirect('facturas:lista_facturas')
@@ -216,14 +222,6 @@ def eliminar_factura(request, factura_id):
 # Vista Web: enviar correo
 # -------------------------------
 
-from django.views.decorators.csrf import csrf_exempt
-from django.core.mail import EmailMessage
-from django.http import JsonResponse
-from django.conf import settings
-from .models import Factura, ConfiguracionCorreo, EnvioFactura  # ✅ Importar EnvioFactura
-from django.utils import timezone
-import os
-
 @csrf_exempt
 def enviar_facturas_view(request):
     if request.method == 'POST':
@@ -236,7 +234,6 @@ def enviar_facturas_view(request):
         for factura_id in ids:
             factura = Factura.objects.filter(id=factura_id).first()
             if factura and factura.id_receptor.id_persona.email:
-
                 cliente = factura.id_receptor.id_persona
                 nombre_cliente = cliente.nombre
                 total_pagar = factura.monto
@@ -266,10 +263,9 @@ Rango de pago oportuno: {periodo}
                 factura.estado = 'enviada'
                 factura.save()
 
-                # ✅ CAMBIO: Se incluye destinatario=cliente (id_persona)
                 EnvioFactura.objects.create(
                     factura=factura,
-                    destinatario=cliente,  # 👈 este campo es requerido
+                    destinatario=cliente,
                     fecha_envio=timezone.now()
                 )
 
